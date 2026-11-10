@@ -86,6 +86,7 @@ class ThermalNetwork:
         self.results = Dict()
         self.timeindex = None
         self.graph = None
+        self.structure = None
 
         if dirname is not None:
             try:
@@ -143,6 +144,18 @@ class ThermalNetwork:
         )
 
         return nx_graph
+
+    def check_structure(self):
+        g = self.to_nx_graph()
+
+        if len(self.components.producers) > 1:
+            return 
+    
+        if nx.is_tree(g):
+            self.structure = "radial"
+        else:
+            self.structure = "ring"
+        return
 
     def set_defaults(self):
         r"""
