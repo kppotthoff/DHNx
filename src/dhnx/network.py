@@ -146,7 +146,7 @@ class ThermalNetwork:
         return nx_graph
 
     def check_structure(self):
-        g = self.to_nx_graph()
+        g = self.to_nx_undirected_graph()
 
         if len(self.components.producers) > 1:
             return 
