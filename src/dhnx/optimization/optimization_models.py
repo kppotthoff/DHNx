@@ -248,10 +248,17 @@ class OemofInvestOptimizationModel(InvestOptimizationModel):
                 "{}".format(len(nx_sum), nx_sum, nx_detail)
             )
 
-        #After checking if all components are connected, check if the underlying network flow is static and if so, determine the flow directions
+        #After checking if all components are connected, 
+        #check if the underlying network flow is static and if so, 
+        #determine the flow directions if static flow directios is activated
         self.thermal_network.determine_flow_mode()
-        if self.thermal_network.flow_mode == "static":
-            self.flow_directions = self.thermal_network.flow_directions_from_single_producer()
+        if (
+            self.settings["static_flow_directions"]
+            and self.thermal_network.flow_mode == "static"
+        ):
+            self.flow_directions = (
+                self.thermal_network.flow_directions_from_single_producer()
+            )
         else:
             self.flow_directions = None
 
@@ -879,6 +886,7 @@ def setup_optimise_investment(
     solver_cmdline_options=None,
     simultaneity=1,
     bidirectional_pipes=False,
+    static_flow_directions=True,
     dump_path=None,
     dump_name="dump.oemof",
     print_logging_info=False,
@@ -918,6 +926,11 @@ def setup_optimise_investment(
     bidirectional_pipes : bool
         Bidirectional pipes leads to bi-directional flow attributes at the
         heatpipeline components {‘min’: -1, bidirectional: True}.
+    static_flow_directions : bool
+        If True (default) and the network is radial with a single producer,
+        fork-to-fork pipes are created unidirectional along the flow
+        direction from the producer. Set to False to disable this
+        reduction, e.g. for benchmarking.
     dump_path : str
         If a dump path is provided, the oemof dump file is stored.
     dump_name : str
@@ -957,6 +970,7 @@ def setup_optimise_investment(
         "solver_cmdline_options": solver_cmdline_options,
         "simultaneity": simultaneity,
         "bidirectional_pipes": bidirectional_pipes,
+        "static_flow_directions": static_flow_directions,
         "dump_path": dump_path,
         "dump_name": dump_name,
         "print_logging_info": print_logging_info,
