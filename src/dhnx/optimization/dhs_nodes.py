@@ -92,7 +92,7 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
                 b_out = busd[(l_1_out, d_labels["l_2"], "bus", end)]
                 d_labels["l_4"] = start + "-" + end
                 nodes = ac.add_heatpipes_exist(
-                    pipe_data, d_labels, gd, q, b_in, b_out, nodes
+                    pipe_data, d_labels, False, q, b_in, b_out, nodes
                 )
 
             elif (typ_from == "consumers") and (typ_to == "forks"):
@@ -110,7 +110,12 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
                 b_out = busd[(l_1_out, d_labels["l_2"], "bus", end)]
                 d_labels["l_4"] = start + "-" + end
                 nodes = ac.add_heatpipes_exist(
-                    pipe_data, d_labels, gd, q, b_in, b_out, nodes
+                    pipe_data, d_labels, 
+                    gd["bidirectional_pipes"], 
+                    q, 
+                    b_in, 
+                    b_out, 
+                    nodes
                 )
 
             elif (typ_from == "producers") and (typ_to == "forks"):
@@ -122,20 +127,43 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
                 b_out = busd[(l_1_out, d_labels["l_2"], "bus", end)]
                 d_labels["l_4"] = start + "-" + end
                 nodes = ac.add_heatpipes_exist(
-                    pipe_data, d_labels, gd, q, b_in, b_out, nodes
+                    pipe_data, d_labels, 
+                    gd["bidirectional_pipes"], 
+                    q, 
+                    b_in, 
+                    b_out, 
+                    nodes
                 )
 
             elif (typ_from == "forks") and (typ_to == "forks"):
-                start = q["from_node"]
-                end = q["to_node"]
+                bidirectional = gd["bidirectional_pipes"]
+                directions = opti_network.flow_directions
+
+                if directions is not None:
+                    bidirectional = False 
+
+                    if (q["from_node"], q["to_node"]) in directions:
+                        start = q["from_node"]
+                        end = q["to_node"]
+                    elif (q["to_node"], q["from_node"]) in directions:
+                        start = q["to_node"]
+                        end = q["from_node"]
+                    else:
+                        raise ValueError(
+                            f"Pipe Id {p} has no static flow directions"
+                        )
+                else:
+                    start = q["from_node"]
+                    end = q["to_node"]
+
                 b_in = busd[(l_1_in, d_labels["l_2"], "bus", start)]
                 b_out = busd[(l_1_out, d_labels["l_2"], "bus", end)]
                 d_labels["l_4"] = start + "-" + end
                 nodes = ac.add_heatpipes_exist(
-                    pipe_data, d_labels, gd, q, b_in, b_out, nodes
+                    pipe_data, d_labels, bidirectional, q, b_in, b_out, nodes
                 )
 
-                if not gd["bidirectional_pipes"]:
+                if not gd["bidirectional_pipes"] and directions is None:
                     # the heatpipes from fork to fork need to be created in
                     # both directions, in case of bidirectional == False
                     start = q["to_node"]
@@ -144,7 +172,13 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
                     b_out = busd[(l_1_out, d_labels["l_2"], "bus", end)]
                     d_labels["l_4"] = start + "-" + end
                     nodes = ac.add_heatpipes_exist(
-                        pipe_data, d_labels, gd, q, b_in, b_out, nodes
+                        pipe_data, 
+                        d_labels, 
+                        bidirectional, 
+                        q, 
+                        b_in, 
+                        b_out, 
+                        nodes
                     )
 
             else:
@@ -218,8 +252,26 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
             elif (q["from_node"].split("-")[0] == "forks") and (
                 q["to_node"].split("-")[0] == "forks"
             ):
-                start = q["from_node"]
-                end = q["to_node"]
+                bidirectional = gd["bidirectional_pipes"]
+                directions = opti_network.flow_directions
+
+                if directions is not None:
+                    bidirectional = False 
+
+                    if (q["from_node"], q["to_node"]) in directions:
+                        start = q["from_node"]
+                        end = q["to_node"]
+                    elif (q["to_node"], q["from_node"]) in directions:
+                        start = q["to_node"]
+                        end = q["from_node"]
+                    else:
+                        raise ValueError(
+                            f"Pipe Id {p} has no static flow directions"
+                        )
+                else:
+                    start = q["from_node"]
+                    end = q["to_node"]
+
                 b_in = busd[(d_labels["l_1"], d_labels["l_2"], "bus", start)]
                 b_out = busd[(d_labels["l_1"], d_labels["l_2"], "bus", end)]
                 d_labels["l_4"] = start + "-" + end
@@ -227,14 +279,14 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
                 nodes = ac.add_heatpipes(
                     pipe_data,
                     d_labels,
-                    gd["bidirectional_pipes"],
+                    bidirectional,
                     q["length"],
                     b_in,
                     b_out,
                     nodes,
                 )
 
-                if not gd["bidirectional_pipes"]:
+                if not bidirectional and directions is None:
                     # the heatpipes from fork to fork need to be created in
                     # both directions, in case of bidirectional == False
                     start = q["to_node"]
@@ -250,7 +302,7 @@ def add_nodes_dhs(opti_network, gd, nodes, busd):
                     nodes = ac.add_heatpipes(
                         pipe_data,
                         d_labels,
-                        gd["bidirectional_pipes"],
+                        bidirectional,
                         q["length"],
                         b_in,
                         b_out,
