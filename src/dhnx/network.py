@@ -86,7 +86,9 @@ class ThermalNetwork:
         self.results = Dict()
         self.timeindex = None
         self.graph = None
-        self.structure = None
+        self.structure = None        # "radial" | "meshed"   (rein topologisch)
+        self.flow_mode = None        # "static" | "dynamic"
+        self.flow_mode_source = None # "auto"   | "user"
 
         if dirname is not None:
             try:
@@ -145,17 +147,29 @@ class ThermalNetwork:
 
         return nx_graph
 
+    def flow_directions_from_single_producer(self):
+        g = self.to_nx_undirected_graph()
+        prod_node = f"producers-{self.components.producers.index[0]}"
+        return set(nx.bfs_edges(g, prod_node))
+
     def check_structure(self):
         g = self.to_nx_undirected_graph()
 
-        if len(self.components.producers) > 1:
-            return 
-    
         if nx.is_tree(g):
             self.structure = "radial"
         else:
-            self.structure = "ring"
-        return
+            self.structure = "meshed"
+
+    def determine_flow_mode(self):
+        self.check_structure()
+        n_prod = len(self.components.producers)
+
+        if self.structure == "radial" and n_prod == 1:
+            self.flow_mode = "static"
+        else:
+            self.flow_mode = "dynamic"
+
+        self.flow_mode_source = "auto"
 
     def set_defaults(self):
         r"""

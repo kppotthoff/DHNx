@@ -248,6 +248,13 @@ class OemofInvestOptimizationModel(InvestOptimizationModel):
                 "{}".format(len(nx_sum), nx_sum, nx_detail)
             )
 
+        #After checking if all components are connected, check if the underlying network flow is static and if so, determine the flow directions
+        self.thermal_network.determine_flow_mode()
+        if self.thermal_network.flow_mode == "static":
+            self.flow_directions = self.thermal_network.flow_directions_from_single_producer()
+        else:
+            self.flow_directions = None
+
     def remove_inactive(self):
         """
         If the attribute active is present in any of the components
