@@ -496,7 +496,7 @@ def add_heatpipes(it, labels, bidirectional, length, b_in, b_out, nodes):
     return nodes
 
 
-def add_heatpipes_exist(pipes, labels, gd, q, b_in, b_out, nodes):
+def add_heatpipes_exist(pipes, labels, bidirectional, q, b_in, b_out, nodes):
     """
     Adds *HeatPipeline* objects with fix capacity for existing pipes
     to the list of oemof.solph components.
@@ -506,8 +506,8 @@ def add_heatpipes_exist(pipes, labels, gd, q, b_in, b_out, nodes):
     pipes
     labels : dict
         Dictonary containing specifications for label-tuple.
-    gd : dict
-        Settings of the investment optimisation of the ThermalNetwork
+    bidirectional : bool
+        Settings for creating bidirectional heatpipelines
     q : pd.Series
         Specific *Pipe* of ThermalNetwork
     b_in : oemof.solph.Bus
@@ -531,7 +531,7 @@ def add_heatpipes_exist(pipes, labels, gd, q, b_in, b_out, nodes):
     hlf = t["l_factor"] * q["length"]
     hlff = t["l_factor_fix"] * q["length"]
 
-    flow_bi_args = {"minimum": -1} if gd["bidirectional_pipes"] else {}
+    flow_bi_args = {"minimum": -1} if bidirectional else {}
 
     outflow_args = {"nonconvex": solph.NonConvex()} if t["nonconvex"] else {}
 
